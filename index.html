@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Times Tables - Interactive Practice</title>
+    <meta name="description"
+        content="Master your times tables with interactive sorting, true/false, numpad input, ordering, and matching activities.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Dark Mode Toggle -->
+    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+
+    <div class="container">
+        <h1>✖️ Times Tables</h1>
+        <div class="subtitle">Master your multiplication facts with fun activities!</div>
+
+        <!-- Times Table Selector -->
+        <div class="table-selector">
+            <label for="timesTableSelect">Practise the:</label>
+            <select id="timesTableSelect">
+                <option value="2">2× table</option>
+                <option value="3" selected>3× table</option>
+                <option value="4">4× table</option>
+                <option value="5">5× table</option>
+                <option value="6">6× table</option>
+                <option value="7">7× table</option>
+                <option value="8">8× table</option>
+                <option value="9">9× table</option>
+                <option value="10">10× table</option>
+                <option value="11">11× table</option>
+                <option value="12">12× table</option>
+            </select>
+        </div>
+
+        <!-- Mode Selection (Tabs) -->
+        <div class="mode-selector">
+            <button class="mode-btn active" id="mode-sort" data-mode="sort">
+                <span class="mode-icon">🗂️</span>
+                <span class="mode-text">Sort</span>
+            </button>
+            <button class="mode-btn" id="mode-truefalse" data-mode="truefalse">
+                <span class="mode-icon">✅</span>
+                <span class="mode-text">True / False</span>
+            </button>
+            <button class="mode-btn" id="mode-input" data-mode="input">
+                <span class="mode-icon">🔢</span>
+                <span class="mode-text">Numpad</span>
+            </button>
+            <button class="mode-btn" id="mode-order" data-mode="order">
+                <span class="mode-icon">🔀</span>
+                <span class="mode-text">Order</span>
+            </button>
+            <button class="mode-btn" id="mode-link" data-mode="link">
+                <span class="mode-icon">🔗</span>
+                <span class="mode-text">Link</span>
+            </button>
+        </div>
+
+        <!-- Stars + Activity area wrapper -->
+        <div class="game-layout">
+            <!-- Star tracker (left side) -->
+            <div class="star-tracker" id="starTracker">
+                <div class="star-count" id="starCount">0</div>
+                <div class="stars-container" id="starsContainer">
+                    <!-- Stars populated by JS -->
+                </div>
+            </div>
+
+            <!-- Main game area -->
+            <div class="game-area" id="gameArea">
+                <!-- Question counter -->
+                <div class="question-header">
+                    <div class="question-badge" id="questionBadge">Q1</div>
+                    <div class="question-text" id="questionText"></div>
+                </div>
+
+                <!-- Dynamic content area -->
+                <div class="activity-content" id="activityContent">
+                    <!-- Filled by JS based on active mode -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-controls">
+            <button class="btn btn-nav" id="btnPrev" disabled>← Previous</button>
+            <button class="btn btn-check" id="btnCheckAnswer">✓ Check</button>
+            <button class="btn btn-nav" id="btnNext">Next →</button>
+        </div>
+    </div>
+
+    <!-- Fireworks Overlay -->
+    <div class="fireworks-overlay" id="fireworksOverlay">
+        <canvas id="fireworksCanvas"></canvas>
+        <div class="fireworks-message" id="fireworksMessage">🌟 ALL CORRECT! 🌟</div>
+        <button class="fireworks-close-btn" id="fireworksClose">Next Activity ➔</button>
+    </div>
+
+    <!-- SVG for link lines -->
+    <svg class="link-svg" id="linkSvg"></svg>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
