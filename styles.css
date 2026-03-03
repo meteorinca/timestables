@@ -118,6 +118,14 @@ body.dark-mode .numpad-display {
     border-color: var(--border-light);
 }
 
+body.dark-mode .order-card,
+body.dark-mode .order-slot.filled,
+body.dark-mode .link-item:hover .link-box,
+body.dark-mode .link-item.selected .link-box {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--text-primary);
+}
+
 body.dark-mode select {
     background: var(--bg-card);
     color: var(--text-primary);

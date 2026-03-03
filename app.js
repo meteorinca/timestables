@@ -64,6 +64,30 @@ function getMaxMultiplier(table) {
     return table === 11 ? 9 : 12;
 }
 
+// Get valid multipliers to avoid super easy ones
+function getValidMultipliers(table) {
+    const mults = [];
+    const max = getMaxMultiplier(table);
+
+    // Define min multiple map (avoid 1x, 2x, etc for specific tables)
+    const minMap = {
+        2: 4,
+        11: 5
+    };
+    const minMult = minMap[table] || 3; // Default min is 3
+
+    for (let i = minMult; i <= max; i++) {
+        if (i === 10) continue; // Exclude x10 for all tables since it's easy
+        mults.push(i);
+    }
+    return mults;
+}
+
+function getRandomMultiplier(table) {
+    const valid = getValidMultipliers(table);
+    return valid[Math.floor(Math.random() * valid.length)];
+}
+
 // Get the table for the current question (supports ALL mode)
 function getQuestionTable(questionIndex) {
     if (isAllMode && questionTables[questionIndex] !== undefined) {
@@ -109,7 +133,7 @@ function generateSortQuestions() {
         const inCount = randInt(3, 4);
         const usedMultiples = new Set();
         while (inTable.length < inCount) {
-            const m = randInt(1, maxMult);
+            const m = getRandomMultiplier(table);
             if (!usedMultiples.has(m)) {
                 usedMultiples.add(m);
                 inTable.push(table * m);
@@ -154,7 +178,7 @@ function generateTrueFalseQuestions() {
 
         if (type === 0) {
             // "A × B = C" true or false
-            const a = randInt(1, maxMult);
+            const a = getRandomMultiplier(table);
             const b = table;
             const correct = a * b;
             const isTrue = Math.random() > 0.4;
@@ -165,13 +189,13 @@ function generateTrueFalseQuestions() {
             else answer = false;
         } else if (type === 1) {
             // "X lots of Y is the same as Y lots of X"
-            const a = randInt(2, maxMult);
+            const a = getRandomMultiplier(table);
             const b = table;
             statement = `${a} lots of ${b} is the same as ${b} lots of ${a}.`;
             answer = true;
         } else if (type === 2) {
             // "X is in the Ntimes table"
-            const multiplier = randInt(1, maxMult);
+            const multiplier = getRandomMultiplier(table);
             const isTrue = Math.random() > 0.4;
             let num;
             if (isTrue) {
@@ -184,8 +208,10 @@ function generateTrueFalseQuestions() {
             answer = isInTable(num, table);
         } else {
             // "A × B is greater/less than C × D"
-            const a = randInt(1, maxMult);
-            const c = randInt(1, maxMult);
+            const a = getRandomMultiplier(table);
+            let c;
+            do { c = getRandomMultiplier(table); } while (c === a);
+
             const prodA = a * table;
             const prodC = c * table;
             if (prodA === prodC) {
@@ -224,7 +250,7 @@ function generateInputQuestions() {
         const maxMult = getMaxMultiplier(table);
         let a, b;
         do {
-            a = randInt(1, maxMult);
+            a = getRandomMultiplier(table);
             b = table;
         } while (usedPairs.has(`${a}x${b}`));
         usedPairs.add(`${a}x${b}`);
@@ -253,7 +279,10 @@ function generateOrderQuestions() {
         const maxMult = getMaxMultiplier(table);
 
         // Pick a starting multiplier and generate 5 consecutive multiples
-        const startMult = randInt(1, Math.max(1, maxMult - 4));
+        const minMap = { 2: 4, 11: 5 };
+        const minMult = minMap[table] || 3;
+        const maxStart = maxMult - 4;
+        const startMult = randInt(Math.min(minMult, maxStart), maxStart);
         const sequence = [];
         for (let i = 0; i < 5; i++) {
             sequence.push(table * (startMult + i));
@@ -300,7 +329,7 @@ function generateLinkQuestions() {
         const usedMults = new Set();
         const facts = [];
         while (facts.length < 4) {
-            const m = randInt(1, maxMult);
+            const m = getRandomMultiplier(table);
             if (!usedMults.has(m)) {
                 usedMults.add(m);
                 facts.push({
