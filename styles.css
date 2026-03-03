@@ -142,19 +142,25 @@ body {
     touch-action: manipulation;
 }
 
-/* ---------- Dark Mode Toggle ---------- */
-.dark-mode-toggle {
+/* ---------- Top Controls ---------- */
+.top-controls {
     position: fixed;
     top: 16px;
     right: 16px;
-    width: 48px;
-    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 500;
+}
+
+.dark-mode-toggle {
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     border: 2px solid var(--border-light);
     background: var(--bg-container);
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     cursor: pointer;
-    z-index: 500;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -165,6 +171,67 @@ body {
 .dark-mode-toggle:hover {
     transform: scale(1.1);
     box-shadow: var(--shadow-lg);
+}
+
+/* Sound toggle */
+.sound-toggle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--border-light);
+    background: var(--bg-container);
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-md);
+}
+
+.sound-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: var(--shadow-lg);
+}
+
+.sound-toggle.muted {
+    opacity: 0.55;
+}
+
+/* Auto-advance toggle */
+.auto-advance-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-container);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-full);
+    padding: 8px 14px 8px 10px;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: var(--shadow-md);
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.auto-advance-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.auto-advance-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary);
+    cursor: pointer;
+    margin: 0;
+}
+
+.auto-advance-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 /* ---------- Container ---------- */
@@ -1133,12 +1200,30 @@ h1 {
         font-size: 0.85rem;
     }
 
-    .dark-mode-toggle {
-        width: 40px;
-        height: 40px;
-        font-size: 1.1rem;
+    .top-controls {
         top: 10px;
         right: 10px;
+        gap: 6px;
+    }
+
+    .dark-mode-toggle,
+    .sound-toggle {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    .auto-advance-toggle {
+        padding: 6px 10px 6px 8px;
+    }
+
+    .auto-advance-label {
+        font-size: 0.7rem;
+    }
+
+    .auto-advance-toggle input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
     }
 }
 

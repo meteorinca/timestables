@@ -15,8 +15,20 @@
 </head>
 
 <body>
-    <!-- Dark Mode Toggle -->
-    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+    <!-- Top-right controls -->
+    <div class="top-controls">
+        <label class="auto-advance-toggle" id="autoAdvanceToggle" title="Auto-advance to next question">
+            <input type="checkbox" id="autoAdvanceCheckbox" checked>
+            <span class="auto-advance-label">⏩ Auto</span>
+        </label>
+        <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound" title="Toggle sound effects">🔊</button>
+        <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+    </div>
+
+    <!-- Audio elements -->
+    <audio id="correctSound" preload="auto" src="assets/audio/correct.mp3"></audio>
+    <audio id="wrongSound" preload="auto" src="assets/audio/wrong.mp3"></audio>
+
 
     <div class="container">
         <h1>✖️ Times Tables</h1>
@@ -26,8 +38,9 @@
         <div class="table-selector">
             <label for="timesTableSelect">Practise the:</label>
             <select id="timesTableSelect">
+                <option value="all" selected>ALL (2-12)</option>
                 <option value="2">2× table</option>
-                <option value="3" selected>3× table</option>
+                <option value="3">3× table</option>
                 <option value="4">4× table</option>
                 <option value="5">5× table</option>
                 <option value="6">6× table</option>

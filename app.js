@@ -10,10 +10,19 @@
 
 let currentMode = 'sort';
 let currentTable = 3;
+let isAllMode = false;
 let currentQuestion = 0;
 let totalQuestions = 10;
 let starsEarned = 0;
 let questionAnswered = false;
+
+// Auto-advance & sound settings
+let autoAdvanceEnabled = true;
+let soundEnabled = true;
+let autoAdvanceTimer = null;
+
+// When ALL mode is active, each question gets its own random table (2-12)
+let questionTables = [];
 
 const MODES = ['sort', 'truefalse', 'input', 'order', 'link'];
 const MODE_LABELS = {
@@ -44,6 +53,18 @@ function randInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function getRandomTable() {
+    return randInt(2, 12);
+}
+
+// Get the table for the current question (supports ALL mode)
+function getQuestionTable(questionIndex) {
+    if (isAllMode && questionTables[questionIndex] !== undefined) {
+        return questionTables[questionIndex];
+    }
+    return currentTable;
+}
+
 function isInTable(num, table) {
     return num > 0 && num % table === 0 && num <= table * 12;
 }
@@ -55,6 +76,9 @@ function isInTable(num, table) {
 function generateSortQuestions() {
     const questions = [];
     for (let q = 0; q < totalQuestions; q++) {
+        const table = isAllMode ? getRandomTable() : currentTable;
+        questionTables[q] = table;
+
         // Pick some numbers in the table and some not
         const inTable = [];
         const notInTable = [];
@@ -66,21 +90,21 @@ function generateSortQuestions() {
             const m = randInt(1, 12);
             if (!usedMultiples.has(m)) {
                 usedMultiples.add(m);
-                inTable.push(currentTable * m);
+                inTable.push(table * m);
             }
         }
 
         // Generate 3-4 numbers NOT in the table
         const outCount = 8 - inCount;
         while (notInTable.length < outCount) {
-            const n = randInt(1, currentTable * 12 + 10);
-            if (!isInTable(n, currentTable) && !notInTable.includes(n) && !inTable.includes(n)) {
+            const n = randInt(1, table * 12 + 10);
+            if (!isInTable(n, table) && !notInTable.includes(n) && !inTable.includes(n)) {
                 notInTable.push(n);
             }
         }
 
         const allNumbers = shuffle([...inTable, ...notInTable]);
-        questions.push({ allNumbers, inTable, notInTable });
+        questions.push({ allNumbers, inTable, notInTable, table });
     }
     return questions;
 }
@@ -88,13 +112,16 @@ function generateSortQuestions() {
 function generateTrueFalseQuestions() {
     const questions = [];
     for (let q = 0; q < totalQuestions; q++) {
+        const table = isAllMode ? getRandomTable() : currentTable;
+        questionTables[q] = table;
+
         const type = randInt(0, 3);
         let statement, answer;
 
         if (type === 0) {
             // "A × B = C" true or false
             const a = randInt(1, 12);
-            const b = currentTable;
+            const b = table;
             const correct = a * b;
             const isTrue = Math.random() > 0.4;
             const shown = isTrue ? correct : correct + randInt(1, 5) * (Math.random() > 0.5 ? 1 : -1);
@@ -106,7 +133,7 @@ function generateTrueFalseQuestions() {
         } else if (type === 1) {
             // "X lots of Y is the same as Y lots of X"
             const a = randInt(2, 12);
-            const b = currentTable;
+            const b = table;
             statement = `${a} lots of ${b} is the same as ${b} lots of ${a}.`;
             answer = true;
         } else if (type === 2) {
@@ -115,25 +142,25 @@ function generateTrueFalseQuestions() {
             const isTrue = Math.random() > 0.4;
             let num;
             if (isTrue) {
-                num = currentTable * multiplier;
+                num = table * multiplier;
             } else {
-                num = currentTable * multiplier + randInt(1, currentTable - 1);
-                if (num % currentTable === 0) num++;
+                num = table * multiplier + randInt(1, table - 1);
+                if (num % table === 0) num++;
             }
-            statement = `${num} is in the ${currentTable}× table.`;
-            answer = num % currentTable === 0 && num > 0 && num <= currentTable * 12;
+            statement = `${num} is in the ${table}× table.`;
+            answer = num % table === 0 && num > 0 && num <= table * 12;
         } else {
             // "A × B is greater/less than C × D"
             const a = randInt(1, 12);
             const c = randInt(1, 12);
-            const prodA = a * currentTable;
-            const prodC = c * currentTable;
+            const prodA = a * table;
+            const prodC = c * table;
             if (prodA === prodC) {
-                statement = `${a} × ${currentTable} is equal to ${c} × ${currentTable}.`;
+                statement = `${a} × ${table} is equal to ${c} × ${table}.`;
                 answer = true;
             } else {
                 const greaterLabel = prodA > prodC ? 'greater' : 'less';
-                statement = `${a} × ${currentTable} is ${greaterLabel} than ${c} × ${currentTable}.`;
+                statement = `${a} × ${table} is ${greaterLabel} than ${c} × ${table}.`;
                 answer = true;
             }
         }
@@ -147,10 +174,13 @@ function generateInputQuestions() {
     const questions = [];
     const usedPairs = new Set();
     for (let q = 0; q < totalQuestions; q++) {
+        const table = isAllMode ? getRandomTable() : currentTable;
+        questionTables[q] = table;
+
         let a, b;
         do {
             a = randInt(1, 12);
-            b = currentTable;
+            b = table;
         } while (usedPairs.has(`${a}x${b}`));
         usedPairs.add(`${a}x${b}`);
         questions.push({ a, b, answer: a * b });
@@ -161,11 +191,14 @@ function generateInputQuestions() {
 function generateOrderQuestions() {
     const questions = [];
     for (let q = 0; q < totalQuestions; q++) {
+        const table = isAllMode ? getRandomTable() : currentTable;
+        questionTables[q] = table;
+
         // Pick a starting multiplier and generate 5 consecutive multiples
         const startMult = randInt(1, 8);
         const sequence = [];
         for (let i = 0; i < 5; i++) {
-            sequence.push(currentTable * (startMult + i));
+            sequence.push(table * (startMult + i));
         }
         // Give some as pre-placed and rest as choices
         const prePlacedCount = randInt(1, 2);
@@ -181,7 +214,7 @@ function generateOrderQuestions() {
 
         const choices = slots.filter(s => !s.prePlaced).map(s => s.value);
 
-        questions.push({ sequence, slots, choices: shuffle(choices) });
+        questions.push({ sequence, slots, choices: shuffle(choices), table });
     }
     return questions;
 }
@@ -189,6 +222,9 @@ function generateOrderQuestions() {
 function generateLinkQuestions() {
     const questions = [];
     for (let q = 0; q < totalQuestions; q++) {
+        const table = isAllMode ? getRandomTable() : currentTable;
+        questionTables[q] = table;
+
         // Generate 4 multiplication facts and their answers
         const usedMults = new Set();
         const facts = [];
@@ -197,8 +233,8 @@ function generateLinkQuestions() {
             if (!usedMults.has(m)) {
                 usedMults.add(m);
                 facts.push({
-                    expression: `${m}×${currentTable}`,
-                    answer: m * currentTable,
+                    expression: `${m}×${table}`,
+                    answer: m * table,
                     multiplier: m
                 });
             }
@@ -281,6 +317,7 @@ function renderCurrentQuestion() {
 let sortState = {};
 
 function renderSortQuestion(data) {
+    const table = getQuestionTable(currentQuestion);
     const qText = document.getElementById('questionText');
     qText.textContent = `Sort these numbers:`;
 
@@ -304,13 +341,13 @@ function renderSortQuestion(data) {
       </div>
       <div class="sort-zones">
         <div class="sort-zone zone-yes" id="zoneYes">
-          <div class="sort-zone-label">in the ${currentTable}× table</div>
+          <div class="sort-zone-label">in the ${table}× table</div>
           <div class="sort-zone-cards" id="zoneYesCards">
             ${state.yesZone.map(n => `<div class="number-card" draggable="true" data-value="${n}">${n}</div>`).join('')}
           </div>
         </div>
         <div class="sort-zone zone-no" id="zoneNo">
-          <div class="sort-zone-label">not in the ${currentTable}× table</div>
+          <div class="sort-zone-label">not in the ${table}× table</div>
           <div class="sort-zone-cards" id="zoneNoCards">
             ${state.noZone.map(n => `<div class="number-card" draggable="true" data-value="${n}">${n}</div>`).join('')}
           </div>
@@ -680,8 +717,9 @@ function checkInputAnswer() {
 let orderState = {};
 
 function renderOrderQuestion(data) {
+    const table = data.table || getQuestionTable(currentQuestion);
     const qText = document.getElementById('questionText');
-    qText.textContent = `Put these in order so you are counting in ${currentTable}s:`;
+    qText.textContent = `Put these in order so you are counting in ${table}s:`;
 
     if (!orderState[currentQuestion]) {
         orderState[currentQuestion] = {
@@ -1027,6 +1065,53 @@ function checkLinkAnswer() {
 // CHECK ANSWER (Main dispatcher)
 // ============================================
 
+// ============================================
+// SOUND EFFECTS
+// ============================================
+
+function playFeedbackSound(correct) {
+    if (!soundEnabled) return;
+    const audio = document.getElementById(correct ? 'correctSound' : 'wrongSound');
+    if (audio) {
+        audio.currentTime = 0;
+        audio.play().catch(() => { }); // ignore autoplay restrictions
+    }
+}
+
+// ============================================
+// AUTO-ADVANCE
+// ============================================
+
+function autoAdvanceAfterCheck(correct) {
+    if (!autoAdvanceEnabled) return;
+    if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
+
+    const delay = correct ? 1000 : 2000;
+
+    autoAdvanceTimer = setTimeout(() => {
+        autoAdvanceTimer = null;
+
+        if (currentQuestion < totalQuestions - 1) {
+            // Not the last question - go to next question
+            currentQuestion++;
+            renderCurrentQuestion();
+        } else {
+            // Last question of tab - advance to next tab
+            if (starsEarned === totalQuestions) {
+                showFireworks();
+            } else {
+                const currentIndex = MODES.indexOf(currentMode);
+                if (currentIndex < MODES.length - 1) {
+                    updateMode(MODES[currentIndex + 1]);
+                } else {
+                    // Already on last tab, show summary
+                    nextQuestion();
+                }
+            }
+        }
+    }, delay);
+}
+
 function checkAnswer() {
     if (questionAnswered) return;
 
@@ -1057,14 +1142,20 @@ function checkAnswer() {
 
     questionAnswered = true;
 
-    // Check if all done
-    if (currentQuestion === totalQuestions - 1 && correct) {
+    // Play feedback sound
+    playFeedbackSound(correct);
+
+    // Check if all done with fireworks (only if not auto-advancing)
+    if (currentQuestion === totalQuestions - 1 && correct && !autoAdvanceEnabled) {
         setTimeout(() => {
             if (starsEarned === totalQuestions) {
                 showFireworks();
             }
         }, 600);
     }
+
+    // Auto-advance
+    autoAdvanceAfterCheck(correct);
 }
 
 // ============================================
@@ -1111,6 +1202,12 @@ function prevQuestion() {
 // ============================================
 
 function updateMode(mode) {
+    // Clear any pending auto-advance timer
+    if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+    }
+
     currentMode = mode;
     currentQuestion = 0;
     starsEarned = 0;
@@ -1141,6 +1238,7 @@ function updateMode(mode) {
 }
 
 function generateQuestions() {
+    questionTables = []; // reset per-question tables
     switch (currentMode) {
         case 'sort':
             questionData = generateSortQuestions();
@@ -1253,7 +1351,14 @@ function startFireworks() {
 
 // Table selector
 document.getElementById('timesTableSelect').addEventListener('change', e => {
-    currentTable = parseInt(e.target.value);
+    const val = e.target.value;
+    if (val === 'all') {
+        isAllMode = true;
+        currentTable = 2; // fallback, not really used in ALL mode
+    } else {
+        isAllMode = false;
+        currentTable = parseInt(val);
+    }
     updateMode(currentMode);
 });
 
@@ -1274,6 +1379,34 @@ document.getElementById('darkModeToggle').onclick = toggleDarkMode;
 if (localStorage.getItem('tt-dark-mode') === 'true') {
     document.body.classList.add('dark-mode');
     document.getElementById('darkModeToggle').textContent = '☀️';
+}
+
+// Sound toggle
+document.getElementById('soundToggle').onclick = () => {
+    soundEnabled = !soundEnabled;
+    const btn = document.getElementById('soundToggle');
+    btn.textContent = soundEnabled ? '🔊' : '🔇';
+    btn.classList.toggle('muted', !soundEnabled);
+    localStorage.setItem('tt-sound', soundEnabled);
+};
+
+// Restore sound preference
+if (localStorage.getItem('tt-sound') === 'false') {
+    soundEnabled = false;
+    document.getElementById('soundToggle').textContent = '🔇';
+    document.getElementById('soundToggle').classList.add('muted');
+}
+
+// Auto-advance toggle
+document.getElementById('autoAdvanceCheckbox').onchange = (e) => {
+    autoAdvanceEnabled = e.target.checked;
+    localStorage.setItem('tt-auto-advance', autoAdvanceEnabled);
+};
+
+// Restore auto-advance preference
+if (localStorage.getItem('tt-auto-advance') === 'false') {
+    autoAdvanceEnabled = false;
+    document.getElementById('autoAdvanceCheckbox').checked = false;
 }
 
 // Fireworks close
