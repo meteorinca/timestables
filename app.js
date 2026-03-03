@@ -9,8 +9,8 @@
 // ============================================
 
 let currentMode = 'sort';
-let currentTable = 3;
-let isAllMode = false;
+let currentTable = 2;
+let isAllMode = true;
 let currentQuestion = 0;
 let totalQuestions = 10;
 let starsEarned = 0;
@@ -54,7 +54,14 @@ function randInt(min, max) {
 }
 
 function getRandomTable() {
-    return randInt(2, 12);
+    // Exclude 10 (too easy)
+    const tables = [2, 3, 4, 5, 6, 7, 8, 9, 11, 12];
+    return tables[Math.floor(Math.random() * tables.length)];
+}
+
+// Get the max multiplier for a table (11s capped at 9)
+function getMaxMultiplier(table) {
+    return table === 11 ? 9 : 12;
 }
 
 // Get the table for the current question (supports ALL mode)
@@ -66,7 +73,8 @@ function getQuestionTable(questionIndex) {
 }
 
 function isInTable(num, table) {
-    return num > 0 && num % table === 0 && num <= table * 12;
+    const maxMult = getMaxMultiplier(table);
+    return num > 0 && num % table === 0 && num <= table * maxMult;
 }
 
 // ============================================
@@ -75,9 +83,23 @@ function isInTable(num, table) {
 
 function generateSortQuestions() {
     const questions = [];
+    const usedTables = new Set();
     for (let q = 0; q < totalQuestions; q++) {
-        const table = isAllMode ? getRandomTable() : currentTable;
+        let table;
+        if (isAllMode) {
+            // Try to avoid repeating tables
+            let attempts = 0;
+            do {
+                table = getRandomTable();
+                attempts++;
+            } while (usedTables.has(table) && attempts < 20);
+            usedTables.add(table);
+        } else {
+            table = currentTable;
+        }
         questionTables[q] = table;
+
+        const maxMult = getMaxMultiplier(table);
 
         // Pick some numbers in the table and some not
         const inTable = [];
@@ -87,7 +109,7 @@ function generateSortQuestions() {
         const inCount = randInt(3, 4);
         const usedMultiples = new Set();
         while (inTable.length < inCount) {
-            const m = randInt(1, 12);
+            const m = randInt(1, maxMult);
             if (!usedMultiples.has(m)) {
                 usedMultiples.add(m);
                 inTable.push(table * m);
@@ -97,7 +119,7 @@ function generateSortQuestions() {
         // Generate 3-4 numbers NOT in the table
         const outCount = 8 - inCount;
         while (notInTable.length < outCount) {
-            const n = randInt(1, table * 12 + 10);
+            const n = randInt(1, table * maxMult + 10);
             if (!isInTable(n, table) && !notInTable.includes(n) && !inTable.includes(n)) {
                 notInTable.push(n);
             }
@@ -111,34 +133,45 @@ function generateSortQuestions() {
 
 function generateTrueFalseQuestions() {
     const questions = [];
+    const usedTables = new Set();
     for (let q = 0; q < totalQuestions; q++) {
-        const table = isAllMode ? getRandomTable() : currentTable;
+        let table;
+        if (isAllMode) {
+            let attempts = 0;
+            do {
+                table = getRandomTable();
+                attempts++;
+            } while (usedTables.has(table) && attempts < 20);
+            usedTables.add(table);
+        } else {
+            table = currentTable;
+        }
         questionTables[q] = table;
 
+        const maxMult = getMaxMultiplier(table);
         const type = randInt(0, 3);
         let statement, answer;
 
         if (type === 0) {
             // "A × B = C" true or false
-            const a = randInt(1, 12);
+            const a = randInt(1, maxMult);
             const b = table;
             const correct = a * b;
             const isTrue = Math.random() > 0.4;
             const shown = isTrue ? correct : correct + randInt(1, 5) * (Math.random() > 0.5 ? 1 : -1);
             statement = `${a} × ${b} = ${shown === 0 ? correct + 1 : shown}`;
-            answer = isTrue || shown === correct;
             // Ensure consistency
             if (shown === correct) answer = true;
             else answer = false;
         } else if (type === 1) {
             // "X lots of Y is the same as Y lots of X"
-            const a = randInt(2, 12);
+            const a = randInt(2, maxMult);
             const b = table;
             statement = `${a} lots of ${b} is the same as ${b} lots of ${a}.`;
             answer = true;
         } else if (type === 2) {
             // "X is in the Ntimes table"
-            const multiplier = randInt(1, 12);
+            const multiplier = randInt(1, maxMult);
             const isTrue = Math.random() > 0.4;
             let num;
             if (isTrue) {
@@ -148,11 +181,11 @@ function generateTrueFalseQuestions() {
                 if (num % table === 0) num++;
             }
             statement = `${num} is in the ${table}× table.`;
-            answer = num % table === 0 && num > 0 && num <= table * 12;
+            answer = isInTable(num, table);
         } else {
             // "A × B is greater/less than C × D"
-            const a = randInt(1, 12);
-            const c = randInt(1, 12);
+            const a = randInt(1, maxMult);
+            const c = randInt(1, maxMult);
             const prodA = a * table;
             const prodC = c * table;
             if (prodA === prodC) {
@@ -173,13 +206,25 @@ function generateTrueFalseQuestions() {
 function generateInputQuestions() {
     const questions = [];
     const usedPairs = new Set();
+    const usedTables = new Set();
     for (let q = 0; q < totalQuestions; q++) {
-        const table = isAllMode ? getRandomTable() : currentTable;
+        let table;
+        if (isAllMode) {
+            let attempts = 0;
+            do {
+                table = getRandomTable();
+                attempts++;
+            } while (usedTables.has(table) && attempts < 20);
+            usedTables.add(table);
+        } else {
+            table = currentTable;
+        }
         questionTables[q] = table;
 
+        const maxMult = getMaxMultiplier(table);
         let a, b;
         do {
-            a = randInt(1, 12);
+            a = randInt(1, maxMult);
             b = table;
         } while (usedPairs.has(`${a}x${b}`));
         usedPairs.add(`${a}x${b}`);
@@ -190,12 +235,25 @@ function generateInputQuestions() {
 
 function generateOrderQuestions() {
     const questions = [];
+    const usedTables = new Set();
     for (let q = 0; q < totalQuestions; q++) {
-        const table = isAllMode ? getRandomTable() : currentTable;
+        let table;
+        if (isAllMode) {
+            let attempts = 0;
+            do {
+                table = getRandomTable();
+                attempts++;
+            } while (usedTables.has(table) && attempts < 20);
+            usedTables.add(table);
+        } else {
+            table = currentTable;
+        }
         questionTables[q] = table;
 
+        const maxMult = getMaxMultiplier(table);
+
         // Pick a starting multiplier and generate 5 consecutive multiples
-        const startMult = randInt(1, 8);
+        const startMult = randInt(1, Math.max(1, maxMult - 4));
         const sequence = [];
         for (let i = 0; i < 5; i++) {
             sequence.push(table * (startMult + i));
@@ -221,15 +279,28 @@ function generateOrderQuestions() {
 
 function generateLinkQuestions() {
     const questions = [];
+    const usedTables = new Set();
     for (let q = 0; q < totalQuestions; q++) {
-        const table = isAllMode ? getRandomTable() : currentTable;
+        let table;
+        if (isAllMode) {
+            let attempts = 0;
+            do {
+                table = getRandomTable();
+                attempts++;
+            } while (usedTables.has(table) && attempts < 20);
+            usedTables.add(table);
+        } else {
+            table = currentTable;
+        }
         questionTables[q] = table;
+
+        const maxMult = getMaxMultiplier(table);
 
         // Generate 4 multiplication facts and their answers
         const usedMults = new Set();
         const facts = [];
         while (facts.length < 4) {
-            const m = randInt(1, 12);
+            const m = randInt(1, maxMult);
             if (!usedMults.has(m)) {
                 usedMults.add(m);
                 facts.push({
@@ -1273,10 +1344,51 @@ function toggleDarkMode() {
 // FIREWORKS
 // ============================================
 
+let fireworksAutoCloseTimer = null;
+
 function showFireworks() {
     const overlay = document.getElementById('fireworksOverlay');
     overlay.style.display = 'flex';
+
+    // Play fireworks sound
+    if (soundEnabled) {
+        const audio = document.getElementById('fireworksSound');
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(() => { });
+        }
+    }
+
     startFireworks();
+
+    // Auto-close after 6 seconds
+    if (fireworksAutoCloseTimer) clearTimeout(fireworksAutoCloseTimer);
+    fireworksAutoCloseTimer = setTimeout(() => {
+        fireworksAutoCloseTimer = null;
+        closeFireworks();
+    }, 6000);
+}
+
+function closeFireworks() {
+    // Clear auto-close timer if still pending
+    if (fireworksAutoCloseTimer) {
+        clearTimeout(fireworksAutoCloseTimer);
+        fireworksAutoCloseTimer = null;
+    }
+
+    // Stop fireworks sound
+    const audio = document.getElementById('fireworksSound');
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+    }
+
+    document.getElementById('fireworksOverlay').style.display = 'none';
+
+    // Move to next mode
+    const currentIndex = MODES.indexOf(currentMode);
+    const nextIndex = (currentIndex + 1) % MODES.length;
+    updateMode(MODES[nextIndex]);
 }
 
 function startFireworks() {
@@ -1409,14 +1521,9 @@ if (localStorage.getItem('tt-auto-advance') === 'false') {
     document.getElementById('autoAdvanceCheckbox').checked = false;
 }
 
-// Fireworks close
-document.getElementById('fireworksClose').onclick = () => {
-    document.getElementById('fireworksOverlay').style.display = 'none';
-    // Move to next mode
-    const currentIndex = MODES.indexOf(currentMode);
-    const nextIndex = (currentIndex + 1) % MODES.length;
-    updateMode(MODES[nextIndex]);
-};
+// Fireworks close (both X button and Next Activity button)
+document.getElementById('fireworksClose').onclick = closeFireworks;
+document.getElementById('fireworksX').onclick = closeFireworks;
 
 // Handle deep linking
 window.onhashchange = () => {
